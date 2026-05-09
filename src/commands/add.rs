@@ -90,6 +90,7 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
     Ok(PackageConfig {
         os: if os.is_empty() { None } else { Some(os) },
         install: install.map(crate::config::Install::Simple),
+        install_command: None,
         files: if files.is_empty() { None } else { Some(files) },
         link_mode: Some(link_mode),
         tags: if tags.is_empty() { None } else { Some(tags) },
@@ -112,6 +113,7 @@ fn build_from_args(args: &AddArgs) -> PackageConfig {
     PackageConfig {
         os: if args.os.is_empty() { None } else { Some(args.os.clone()) },
         install: args.install.clone().map(crate::config::Install::Simple),
+        install_command: None,
         files: if files.is_empty() { None } else { Some(files) },
         link_mode,
         tags: if args.tag.is_empty() { None } else { Some(args.tag.clone()) },

@@ -174,6 +174,7 @@ mod tests {
             os: None,
             depends_on: depends_on.map(|d| d.into_iter().map(String::from).collect()),
             install: None,
+            install_command: None,
             files: None,
             link_mode: None,
             tags: None,

@@ -83,15 +83,11 @@ pub fn run(args: &ApplyArgs, config_path: Option<&Path>) -> Result<()> {
         let mut failed = false;
 
         // Install step
-        if let Some(ref install_field) = pkg.install {
+        if let Some(cmd) = install::resolve_command(pkg, &current, &config.managers) {
             if !install::is_installed(name) {
-                if let Some(cmd) =
-                    install::resolve_install_command(name, install_field, &current, &config.managers)
-                {
-                    if let Err(e) = install::run_install(&cmd, name, args.yes, args.dry_run) {
-                        failures.push((name.clone(), e.to_string()));
-                        failed = true;
-                    }
+                if let Err(e) = install::run_install(&cmd, name, args.yes, args.dry_run) {
+                    failures.push((name.clone(), e.to_string()));
+                    failed = true;
                 }
             }
         }

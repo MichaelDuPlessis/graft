@@ -17,6 +17,7 @@ pub struct PackageConfig {
     pub os: Option<Vec<Platform>>,
     pub depends_on: Option<Vec<String>>,
     pub install: Option<Install>,
+    pub install_command: Option<String>,
     pub files: Option<HashMap<String, String>>,
     pub link_mode: Option<LinkMode>,
     pub tags: Option<Vec<String>>,

@@ -36,6 +36,20 @@ pub fn resolve_install_command(
     Some(format!("{} {}", prefix, package))
 }
 
+pub fn resolve_command(
+    pkg: &crate::config::PackageConfig,
+    platform: &Platform,
+    managers: &HashMap<Platform, String>,
+) -> Option<String> {
+    if let Some(ref cmd) = pkg.install_command {
+        return Some(cmd.clone());
+    }
+    if let Some(ref install) = pkg.install {
+        return resolve_install_command("", install, platform, managers);
+    }
+    None
+}
+
 pub fn run_install(command: &str, pkg_name: &str, yes: bool, dry_run: bool) -> Result<()> {
     if dry_run {
         println!("Would run: {command}");
