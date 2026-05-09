@@ -1,0 +1,46 @@
+managers:
+  macos: "brew install"
+  arch: "pacman -S --noconfirm"
+
+neovim:
+  os:
+    - macos
+    - linux
+  install: neovim
+  files:
+    "nvim/init.lua": "~/.config/nvim/init.lua"
+  tags:
+    - editor
+
+ripgrep:
+  os:
+    - macos
+    - arch
+  install:
+    macos: ripgrep
+    arch: ripgrep
+  link_mode: copy
+  files:
+    "ripgrep/config": "~/.config/ripgrep/config"
+  tags:
+    - search
+
+waybar:
+  os:
+    - arch
+  depends_on:
+    - hyprland
+  install: waybar
+  files:
+    "waybar/config": "~/.config/waybar/config"
+  tags:
+    - wm
+
+hyprland:
+  os:
+    - arch
+  install: hyprland
+  files:
+    "hyprland/hyprland.conf": "~/.config/hypr/hyprland.conf"
+  tags:
+    - wm
