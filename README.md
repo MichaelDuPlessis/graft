@@ -17,9 +17,7 @@ Run `graft apply` on a fresh machine and get a fully configured environment.
 
 ## Installation
 
-```bash
-cargo install --path .
-```
+TODO
 
 ## Quick Start
 
@@ -31,13 +29,13 @@ macos = "brew install"
 arch = "pacman -S --noconfirm"
 ubuntu = "sudo apt install -y"
 
-[neovim]
+[packages.neovim]
 os = ["macos", "linux"]
 install = "neovim"
 files = { "nvim/" = "~/.config/nvim" }
 tags = ["editor"]
 
-[zsh]
+[packages.zsh]
 install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
 files = { "zsh/.zshrc" = "~/.zshrc", "zsh/.zshenv" = "~/.zshenv" }
 tags = ["shell"]
@@ -348,37 +346,37 @@ arch = "pacman -S --noconfirm"
 ubuntu = "sudo apt install -y"
 fedora = "sudo dnf install -y"
 
-[neovim]
+[packages.neovim]
 os = ["macos", "linux"]
 install = "neovim"
 files = { "nvim/" = "~/.config/nvim" }
 tags = ["editor"]
 
-[ripgrep]
+[packages.ripgrep]
 os = ["macos", "arch", "ubuntu"]
 install = { macos = "ripgrep", arch = "ripgrep", ubuntu = "ripgrep" }
 link_mode = "copy"
 files = { "ripgrep/config" = "~/.config/ripgrep/config" }
 tags = ["search", "cli"]
 
-[zsh]
+[packages.zsh]
 install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
 files = { "zsh/.zshrc" = "~/.zshrc", "zsh/.zshenv" = "~/.zshenv" }
 tags = ["shell"]
 
-[rust]
+[packages.rust]
 os = ["macos", "linux"]
 install_command = "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
 files = { "cargo/config.toml" = "~/.cargo/config.toml" }
 tags = ["dev"]
 
-[hyprland]
+[packages.hyprland]
 os = ["arch"]
 install = "hyprland"
 files = { "hyprland/" = "~/.config/hypr" }
 tags = ["wm"]
 
-[waybar]
+[packages.waybar]
 os = ["arch"]
 depends_on = ["hyprland"]
 install = "waybar"
