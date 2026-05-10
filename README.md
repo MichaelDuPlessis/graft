@@ -30,7 +30,6 @@ Create a `graft.toml` in your dotfiles directory:
 macos = "brew install"
 arch = "pacman -S --noconfirm"
 ubuntu = "sudo apt install -y"
-fedora = "sudo dnf install -y"
 
 [neovim]
 os = ["macos", "linux"]
@@ -42,17 +41,6 @@ tags = ["editor"]
 install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
 files = { "zsh/.zshrc" = "~/.zshrc", "zsh/.zshenv" = "~/.zshenv" }
 tags = ["shell"]
-
-[rust]
-install_command = "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-files = { "cargo/config.toml" = "~/.cargo/config.toml" }
-
-[waybar]
-os = ["arch"]
-depends_on = ["hyprland"]
-install = "waybar"
-files = { "waybar/" = "~/.config/waybar" }
-tags = ["wm"]
 ```
 
 Then run:
@@ -61,115 +49,344 @@ Then run:
 graft apply
 ```
 
-## Commands
+---
+
+## CLI Reference
+
+### Global Options
+
+These options work with any command:
+
+| Flag | Description |
+|------|-------------|
+| `--config <PATH>` | Path to config file. Overrides auto-detection (which searches for `graft.toml`, `graft.yaml`, `graft.json` in the current directory). |
+| `-h, --help` | Show help |
+| `-V, --version` | Show version |
+
+```bash
+graft --config ~/dotfiles/graft.toml apply
+graft --config /path/to/graft.yaml status
+```
+
+---
 
 ### `graft apply`
 
-Deploy packages — installs tools and links files.
+Deploy packages — installs tools and links/copies files.
+
+```
+graft apply [PACKAGES...] [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `[PACKAGES...]` | Optional. Package names to deploy. If omitted, deploys all packages applicable to the current OS. |
+
+**Options:**
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--tag <TAG>` | | Only deploy packages with this tag. Repeatable for multiple tags. |
+| `--os <PLATFORM>` | | Override automatic OS detection. Use any platform string (e.g., `macos`, `arch`, `ubuntu`, `fedora`). |
+| `--yes` | `-y` | Skip confirmation prompts for package installations. |
+| `--force` | `-f` | Overwrite existing files at destinations without prompting. |
+| `--dry-run` | | Show what would be done without making any changes. |
+
+**Examples:**
 
 ```bash
-graft apply                    # Deploy all applicable packages
-graft apply neovim zsh         # Deploy specific packages
-graft apply --tag editor       # Deploy packages with a tag
-graft apply --yes --force      # Skip prompts, overwrite existing files
-graft apply --dry-run          # Show what would be done
+graft apply                          # Deploy all applicable packages
+graft apply neovim zsh               # Deploy specific packages only
+graft apply --tag editor             # Deploy packages tagged "editor"
+graft apply --tag shell --tag editor # Deploy packages with either tag
+graft apply --os arch                # Pretend we're on Arch Linux
+graft apply --yes --force            # No prompts, overwrite everything
+graft apply --dry-run                # Preview without making changes
+graft apply waybar                   # Auto-includes dependencies (e.g., hyprland)
 ```
+
+**Behavior:**
+
+1. Filters packages by OS and tags
+2. Resolves dependencies (topological sort). Auto-includes required dependencies.
+3. For each package in dependency order:
+   - Checks if the tool is installed via `which <package_name>`
+   - If not installed, resolves and runs the install command (with confirmation unless `--yes`)
+   - Deploys files via symlink or copy
+4. Prints a summary of successes and failures
+
+---
 
 ### `graft remove`
 
-Remove deployed files (unlink symlinks, delete copies).
+Remove deployed files — unlinks symlinks and deletes copied files.
+
+```
+graft remove [PACKAGES...] [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `[PACKAGES...]` | Optional. Package names to remove. If omitted, removes all deployed files. |
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--tag <TAG>` | Only remove packages with this tag. Repeatable. |
+| `--os <PLATFORM>` | Override OS detection. |
+| `--dry-run` | Show what would be removed without doing it. |
+
+**Examples:**
 
 ```bash
 graft remove                   # Remove all deployed files
-graft remove neovim            # Remove specific package files
-graft remove --dry-run         # Show what would be removed
+graft remove neovim            # Remove only neovim's files
+graft remove --tag wm          # Remove all window manager packages
+graft remove --os arch         # Remove packages applicable to Arch
+graft remove --dry-run         # Preview what would be removed
 ```
+
+**Behavior:**
+
+- Symlink mode: removes the symlink if it points to the expected source
+- Copy mode: removes the file/directory at the destination
+- If a file exists but isn't ours (different symlink target, unexpected file): warns and skips
+- If destination doesn't exist: skips silently
+
+---
 
 ### `graft add`
 
-Add a new package entry to the config file. Supports both CLI flags and interactive mode.
+Add a new package entry to the config file. Supports CLI flags for scripting and interactive mode for manual use.
+
+```
+graft add <PACKAGE_NAME> [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `<PACKAGE_NAME>` | Required. Name for the new package entry. |
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--os <PLATFORM>` | Platforms this package applies to. Repeatable. |
+| `--install <NAME>` | Package name for the system package manager. |
+| `--files <SRC:DEST>` | File mapping as `source:destination`. Repeatable. |
+| `--link-mode <MODE>` | `"symlink"` or `"copy"`. Defaults to symlink. |
+| `--tag <TAG>` | Tag for the package. Repeatable. |
+| `--depends-on <PKG>` | Dependency on another package. Repeatable. |
+
+**Examples:**
 
 ```bash
+# Full CLI usage
 graft add neovim --os macos --os linux --install neovim --files "nvim/:~/.config/nvim" --tag editor
-graft add zsh                  # Interactive mode (prompts for each field)
+
+# Multiple file mappings
+graft add zsh --install zsh --files "zsh/.zshrc:~/.zshrc" --files "zsh/.zshenv:~/.zshenv" --tag shell
+
+# With dependencies
+graft add waybar --os arch --install waybar --depends-on hyprland --tag wm
+
+# Interactive mode (prompts for each field)
+graft add my-package
 ```
+
+**Behavior:**
+
+- If no options are provided: enters interactive mode, prompting for each field
+- If some options are provided: uses them directly without prompting
+- Appends to the existing config file (or creates `graft.toml` if none exists)
+- Preserves existing config file formatting (for TOML, appends a new section)
+
+---
 
 ### `graft status`
 
-Show deployment state of packages.
+Show the deployment state of all applicable packages.
+
+```
+graft status [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--os <PLATFORM>` | Override OS detection. |
+
+**Example:**
 
 ```bash
 graft status
+graft status --os ubuntu
 ```
 
-Displays per-package: install status (✓/✗) and file link status (linked/copied/missing/conflict).
+**Output shows per package:**
+
+- **Install status**: ✓ (green) if the binary is found via `which`, ✗ (red) if not. Only shown for packages with an `install` or `install_command` field.
+- **File status** for each mapping:
+  - `linked` (green) — symlink exists and points to the correct source
+  - `copied` (green) — file exists at destination (copy mode)
+  - `missing` (yellow) — destination doesn't exist
+  - `conflict` (red) — destination exists but isn't our symlink
+
+---
 
 ### `graft list`
 
-List available packages with OS applicability, tags, and link mode.
+List all available packages with their platform applicability, tags, and link mode.
+
+```
+graft list [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--tag <TAG>` | Filter to only show packages with this tag. Repeatable. |
+| `--os <PLATFORM>` | Override OS detection (affects the "Applicable" column). |
+
+**Examples:**
 
 ```bash
-graft list
-graft list --tag shell
+graft list                     # List all packages
+graft list --tag editor        # Only show packages tagged "editor"
+graft list --os fedora         # Show applicability as if on Fedora
 ```
 
-## Global Options
+**Output:** A table with columns: Package, Applicable (yes/no), Tags, Link Mode.
 
-```
---config <PATH>    Path to config file (overrides auto-detection)
---os <PLATFORM>    Override OS detection
-```
+---
 
 ## Config Reference
 
-### Package Fields
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `os` | list of strings | all platforms | Which platforms this package applies to |
-| `depends_on` | list of strings | none | Packages that must be applied first |
-| `install` | string or map | none | Package name for the system package manager |
-| `install_command` | string | none | Arbitrary shell command (bypasses manager prefix) |
-| `files` | map | none | Source → destination file mappings |
-| `link_mode` | `"symlink"` or `"copy"` | `"symlink"` | How files are deployed |
-| `tags` | list of strings | none | Tags for filtering |
-
-### Platform Matching
-
-- If `os` is omitted, the package applies to all platforms
-- `"linux"` in the `os` list matches any Linux distro
-- Specific distro names (e.g., `"arch"`, `"fedora"`) match only that distro
-- Platform is detected from `/etc/os-release` on Linux, `uname` on macOS
+Graft looks for a config file in the current directory: `graft.toml`, `graft.yaml`, or `graft.json` (first match wins). Override with `--config`.
 
 ### Managers Section
 
-Define install command prefixes per platform. Built-in defaults:
+Defines the install command prefix for each platform. If omitted, built-in defaults are used.
 
 ```toml
 [managers]
 macos = "brew install"
 arch = "pacman -S --noconfirm"
 ubuntu = "sudo apt install -y"
-```
-
-Add any distro by including it in your config:
-
-```toml
-[managers]
 fedora = "sudo dnf install -y"
 void = "sudo xbps-install -S"
 nixos = "nix-env -iA nixpkgs."
 ```
 
-## How It Works
+**Built-in defaults** (used when `[managers]` is absent or a platform isn't listed):
 
-1. Detects your OS (or uses `--os` override)
-2. Loads config and filters packages by platform and tags
-3. Resolves dependencies (topological sort, cycle detection)
-4. For each package in order:
-   - Checks if the tool is installed (`which <name>`)
-   - If not, runs the install command (with confirmation)
-   - Deploys files via symlink or copy
+| Platform | Command |
+|----------|---------|
+| `macos` | `brew install` |
+| `arch` | `pacman -S --noconfirm` |
+| `ubuntu` | `sudo apt install -y` |
+
+### Package Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `os` | list of strings | all platforms | Which platforms this package applies to. Use `"linux"` as a catch-all for any Linux distro. |
+| `depends_on` | list of strings | none | Package names that must be applied before this one. |
+| `install` | string or map | none | Package name for the system package manager. String = same name on all platforms. Map = per-platform names. |
+| `install_command` | string | none | Arbitrary shell command run verbatim (e.g., a curl pipe). Takes precedence over `install` if both are set. |
+| `files` | map of string → string | none | Source path (relative to config dir) → destination path. `~` is expanded to `$HOME`. |
+| `link_mode` | `"symlink"` or `"copy"` | `"symlink"` | How files are deployed. |
+| `tags` | list of strings | none | Tags for filtering with `--tag`. |
+
+### Platform Matching
+
+- If `os` is omitted, the package applies to **all** platforms
+- `"linux"` in the `os` list matches **any** Linux distro
+- Specific distro names (e.g., `"arch"`, `"fedora"`, `"ubuntu"`) match only that distro
+- Platform is auto-detected from `/etc/os-release` on Linux and `uname` on macOS
+- Use `--os` to override detection
+
+### Install Logic
+
+1. Graft checks if the tool is already installed via `which <package_name>` (the config key)
+2. If `install_command` is set, it's run verbatim (no prefix)
+3. Otherwise, the `install` field provides the package name, and the platform's manager prefix is prepended
+4. If the `install` field is a map and the current platform isn't in it, installation is skipped (not an error)
+
+### Dependency Resolution
+
+- Dependencies are processed before dependents (topological sort)
+- Circular dependencies produce a hard error with the cycle path
+- When you request a specific package, its dependencies are automatically included
+- If a dependency doesn't exist in the config, graft errors out
+
+### File Deployment
+
+- **Symlink mode** (default): creates a symlink at the destination pointing to the source
+- **Copy mode**: copies the file or directory to the destination
+- Directories are linked/copied as a whole (not individual files within)
+- Parent directories are created automatically
+- Existing files at the destination are skipped unless `--force` is used
+
+---
+
+## Full Example Config
+
+```toml
+[managers]
+macos = "brew install"
+arch = "pacman -S --noconfirm"
+ubuntu = "sudo apt install -y"
+fedora = "sudo dnf install -y"
+
+[neovim]
+os = ["macos", "linux"]
+install = "neovim"
+files = { "nvim/" = "~/.config/nvim" }
+tags = ["editor"]
+
+[ripgrep]
+os = ["macos", "arch", "ubuntu"]
+install = { macos = "ripgrep", arch = "ripgrep", ubuntu = "ripgrep" }
+link_mode = "copy"
+files = { "ripgrep/config" = "~/.config/ripgrep/config" }
+tags = ["search", "cli"]
+
+[zsh]
+install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
+files = { "zsh/.zshrc" = "~/.zshrc", "zsh/.zshenv" = "~/.zshenv" }
+tags = ["shell"]
+
+[rust]
+os = ["macos", "linux"]
+install_command = "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+files = { "cargo/config.toml" = "~/.cargo/config.toml" }
+tags = ["dev"]
+
+[hyprland]
+os = ["arch"]
+install = "hyprland"
+files = { "hyprland/" = "~/.config/hypr" }
+tags = ["wm"]
+
+[waybar]
+os = ["arch"]
+depends_on = ["hyprland"]
+install = "waybar"
+files = { "waybar/" = "~/.config/waybar" }
+tags = ["wm", "bar"]
+```
+
+---
 
 ## Disclaimer
 
