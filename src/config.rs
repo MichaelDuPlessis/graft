@@ -37,9 +37,9 @@ pub enum LinkMode {
 
 pub fn default_managers() -> HashMap<Platform, String> {
     HashMap::from([
-        (Platform::MacOs, "brew install".into()),
-        (Platform::Arch, "pacman -S --noconfirm".into()),
-        (Platform::Ubuntu, "sudo apt install -y".into()),
+        (Platform::new("macos"), "brew install".into()),
+        (Platform::new("arch"), "pacman -S --noconfirm".into()),
+        (Platform::new("ubuntu"), "sudo apt install -y".into()),
     ])
 }
 
@@ -137,11 +137,11 @@ files = { "ripgrep/config" = "~/.config/ripgrep/config" }
         let config = parse_config(toml_str, path).unwrap();
 
         assert_eq!(
-            config.managers.get(&Platform::MacOs).unwrap(),
+            config.managers.get(&Platform::new("macos")).unwrap(),
             "brew install"
         );
         assert_eq!(
-            config.managers.get(&Platform::Arch).unwrap(),
+            config.managers.get(&Platform::new("arch")).unwrap(),
             "yay -S --noconfirm"
         );
         assert_eq!(config.packages.len(), 2);
@@ -149,7 +149,7 @@ files = { "ripgrep/config" = "~/.config/ripgrep/config" }
         let neovim = &config.packages["neovim"];
         assert_eq!(
             neovim.os.as_ref().unwrap(),
-            &[Platform::MacOs, Platform::Linux]
+            &[Platform::new("macos"), Platform::new("linux")]
         );
         assert!(matches!(neovim.install, Some(Install::Simple(ref s)) if s == "neovim"));
         assert_eq!(neovim.tags.as_ref().unwrap(), &["editor"]);
@@ -169,7 +169,7 @@ install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
         let zsh = &config.packages["zsh"];
         match &zsh.install {
             Some(Install::PerPlatform(map)) => {
-                assert_eq!(map.get(&Platform::MacOs).unwrap(), "zsh");
+                assert_eq!(map.get(&Platform::new("macos")).unwrap(), "zsh");
                 assert_eq!(map.len(), 3);
             }
             _ => panic!("expected PerPlatform install"),
@@ -179,9 +179,9 @@ install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
     #[test]
     fn default_managers_has_expected_entries() {
         let m = default_managers();
-        assert_eq!(m.get(&Platform::MacOs).unwrap(), "brew install");
-        assert_eq!(m.get(&Platform::Arch).unwrap(), "pacman -S --noconfirm");
-        assert_eq!(m.get(&Platform::Ubuntu).unwrap(), "sudo apt install -y");
+        assert_eq!(m.get(&Platform::new("macos")).unwrap(), "brew install");
+        assert_eq!(m.get(&Platform::new("arch")).unwrap(), "pacman -S --noconfirm");
+        assert_eq!(m.get(&Platform::new("ubuntu")).unwrap(), "sudo apt install -y");
     }
 
     #[test]

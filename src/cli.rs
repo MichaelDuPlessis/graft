@@ -1,4 +1,4 @@
-use crate::platform::Platform;
+use crate::platform::{self, Platform};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -37,7 +37,7 @@ pub struct ApplyArgs {
     pub tag: Vec<String>,
 
     /// Override OS detection
-    #[arg(long)]
+    #[arg(long, value_parser = platform::parse_platform)]
     pub os: Option<Platform>,
 
     /// Skip confirmation prompts for installs
@@ -63,7 +63,7 @@ pub struct RemoveArgs {
     pub tag: Vec<String>,
 
     /// Override OS detection
-    #[arg(long)]
+    #[arg(long, value_parser = platform::parse_platform)]
     pub os: Option<Platform>,
 
     /// Show what would be done without doing it
@@ -77,7 +77,7 @@ pub struct AddArgs {
     pub name: String,
 
     /// Platforms this package applies to (repeatable)
-    #[arg(long)]
+    #[arg(long, value_parser = platform::parse_platform)]
     pub os: Vec<Platform>,
 
     /// Package name for the system package manager
@@ -104,7 +104,7 @@ pub struct AddArgs {
 #[derive(Debug, clap::Args)]
 pub struct StatusArgs {
     /// Override OS detection
-    #[arg(long)]
+    #[arg(long, value_parser = platform::parse_platform)]
     pub os: Option<Platform>,
 }
 
@@ -115,6 +115,6 @@ pub struct ListArgs {
     pub tag: Vec<String>,
 
     /// Override OS detection
-    #[arg(long)]
+    #[arg(long, value_parser = platform::parse_platform)]
     pub os: Option<Platform>,
 }

@@ -16,9 +16,9 @@ fn fixture_path(name: &str) -> PathBuf {
 
 fn verify_config(config: &config::GraftConfig) {
     // Managers
-    assert_eq!(config.managers.get(&Platform::MacOs).unwrap(), "brew install");
+    assert_eq!(config.managers.get(&Platform::new("macos")).unwrap(), "brew install");
     assert_eq!(
-        config.managers.get(&Platform::Arch).unwrap(),
+        config.managers.get(&Platform::new("arch")).unwrap(),
         "pacman -S --noconfirm"
     );
 
@@ -27,7 +27,7 @@ fn verify_config(config: &config::GraftConfig) {
 
     // neovim
     let nv = &config.packages["neovim"];
-    assert_eq!(nv.os.as_ref().unwrap(), &[Platform::MacOs, Platform::Linux]);
+    assert_eq!(nv.os.as_ref().unwrap(), &[Platform::new("macos"), Platform::new("linux")]);
     assert!(matches!(&nv.install, Some(Install::Simple(s)) if s == "neovim"));
     assert_eq!(nv.tags.as_ref().unwrap(), &["editor"]);
 
@@ -44,7 +44,7 @@ fn verify_config(config: &config::GraftConfig) {
 
     // hyprland
     let hy = &config.packages["hyprland"];
-    assert_eq!(hy.os.as_ref().unwrap(), &[Platform::Arch]);
+    assert_eq!(hy.os.as_ref().unwrap(), &[Platform::new("arch")]);
     assert!(matches!(&hy.install, Some(Install::Simple(s)) if s == "hyprland"));
 }
 
@@ -73,7 +73,7 @@ fn test_dependency_resolution_order() {
         config.packages.iter().map(|(k, v)| (k.clone(), v)).collect();
 
     let order =
-        resolve::resolve_order(&pkg_refs, &["waybar".into()], &Platform::Arch).unwrap();
+        resolve::resolve_order(&pkg_refs, &["waybar".into()], &Platform::new("arch")).unwrap();
 
     let hyprland_pos = order.iter().position(|n| n == "hyprland").unwrap();
     let waybar_pos = order.iter().position(|n| n == "waybar").unwrap();
@@ -103,32 +103,32 @@ fn test_dependency_cycle_detection() {
     let packages: HashMap<String, &PackageConfig> =
         HashMap::from([("a".into(), &a), ("b".into(), &b)]);
 
-    let result = resolve::resolve_order(&packages, &["a".into()], &Platform::MacOs);
+    let result = resolve::resolve_order(&packages, &["a".into()], &Platform::new("macos"));
     assert!(matches!(result, Err(GraftError::CycleDetected(_))));
 }
 
 #[test]
 fn test_platform_matching() {
     // Empty list matches everything
-    assert!(platform::matches(&[], &Platform::MacOs));
+    assert!(platform::matches(&[], &Platform::new("macos")));
 
     // Exact match
-    assert!(platform::matches(&[Platform::Arch], &Platform::Arch));
-    assert!(!platform::matches(&[Platform::Arch], &Platform::MacOs));
+    assert!(platform::matches(&[Platform::new("arch")], &Platform::new("arch")));
+    assert!(!platform::matches(&[Platform::new("arch")], &Platform::new("macos")));
 
     // Linux is a catch-all for Arch and Ubuntu
-    assert!(platform::matches(&[Platform::Linux], &Platform::Arch));
-    assert!(platform::matches(&[Platform::Linux], &Platform::Ubuntu));
-    assert!(!platform::matches(&[Platform::Linux], &Platform::MacOs));
+    assert!(platform::matches(&[Platform::new("linux")], &Platform::new("arch")));
+    assert!(platform::matches(&[Platform::new("linux")], &Platform::new("ubuntu")));
+    assert!(!platform::matches(&[Platform::new("linux")], &Platform::new("macos")));
 
     // Multiple platforms
     assert!(platform::matches(
-        &[Platform::MacOs, Platform::Arch],
-        &Platform::MacOs
+        &[Platform::new("macos"), Platform::new("arch")],
+        &Platform::new("macos")
     ));
     assert!(!platform::matches(
-        &[Platform::MacOs, Platform::Arch],
-        &Platform::Ubuntu
+        &[Platform::new("macos"), Platform::new("arch")],
+        &Platform::new("ubuntu")
     ));
 }
 

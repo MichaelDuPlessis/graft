@@ -12,7 +12,7 @@ use std::path::Path;
 pub fn run(args: &ApplyArgs, config_path: Option<&Path>) -> Result<()> {
     let (config, cfg_path) = config::load(config_path)?;
     let config_dir = cfg_path.parent().unwrap();
-    let current = platform::detect(args.os)?;
+    let current = platform::detect(args.os.as_ref())?;
 
     // Filter by OS applicability
     let applicable: HashMap<String, &PackageConfig> = config

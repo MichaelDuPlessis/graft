@@ -9,7 +9,7 @@ use std::path::Path;
 pub fn run(args: &RemoveArgs, config_path: Option<&Path>) -> Result<()> {
     let (cfg, config_file_path) = config::load(config_path)?;
     let config_dir = config_file_path.parent().unwrap();
-    let current_platform = platform::detect(args.os)?;
+    let current_platform = platform::detect(args.os.as_ref())?;
 
     // Validate requested packages exist in config
     if !args.packages.is_empty() {

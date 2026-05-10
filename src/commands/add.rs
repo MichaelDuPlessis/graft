@@ -31,20 +31,17 @@ fn is_interactive(args: &AddArgs) -> bool {
 }
 
 fn prompt_interactive(name: &str) -> Result<PackageConfig> {
-    let platforms = &[
-        Platform::MacOs,
-        Platform::Arch,
-        Platform::Ubuntu,
-        Platform::Linux,
-    ];
-    let platform_labels: Vec<String> = platforms.iter().map(|p| p.to_string()).collect();
+    let platform_labels = &["macos", "arch", "ubuntu", "linux"];
 
     let os_indices = MultiSelect::new()
         .with_prompt(format!("OS platforms for '{name}'"))
-        .items(&platform_labels)
+        .items(platform_labels)
         .interact()
         .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-    let os: Vec<Platform> = os_indices.into_iter().map(|i| platforms[i]).collect();
+    let os: Vec<Platform> = os_indices
+        .into_iter()
+        .map(|i| Platform::new(platform_labels[i]))
+        .collect();
 
     let install_input: String = Input::new()
         .with_prompt("Install package name (empty to skip)")

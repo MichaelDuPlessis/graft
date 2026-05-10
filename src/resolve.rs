@@ -187,7 +187,7 @@ mod tests {
         let packages: HashMap<String, &PackageConfig> =
             HashMap::from([("a".into(), &a), ("b".into(), &b)]);
 
-        let result = resolve_order(&packages, &["a".into()], &Platform::MacOs).unwrap();
+        let result = resolve_order(&packages, &["a".into()], &Platform::new("macos")).unwrap();
         assert_eq!(result, vec!["b", "a"]);
     }
 
@@ -198,7 +198,7 @@ mod tests {
         let packages: HashMap<String, &PackageConfig> =
             HashMap::from([("a".into(), &a), ("b".into(), &b)]);
 
-        let result = resolve_order(&packages, &["a".into()], &Platform::MacOs);
+        let result = resolve_order(&packages, &["a".into()], &Platform::new("macos"));
         assert!(matches!(result, Err(GraftError::CycleDetected(_))));
     }
 
@@ -207,7 +207,7 @@ mod tests {
         let a = make_pkg(Some(vec!["missing"]));
         let packages: HashMap<String, &PackageConfig> = HashMap::from([("a".into(), &a)]);
 
-        let result = resolve_order(&packages, &["a".into()], &Platform::MacOs);
+        let result = resolve_order(&packages, &["a".into()], &Platform::new("macos"));
         assert!(matches!(result, Err(GraftError::MissingDependency { .. })));
         if let Err(GraftError::MissingDependency {
             package,
@@ -226,7 +226,7 @@ mod tests {
         let packages: HashMap<String, &PackageConfig> =
             HashMap::from([("a".into(), &a), ("b".into(), &b)]);
 
-        let result = resolve_order(&packages, &[], &Platform::MacOs).unwrap();
+        let result = resolve_order(&packages, &[], &Platform::new("macos")).unwrap();
         // Both should be present, order doesn't matter
         assert_eq!(result.len(), 2);
         assert!(result.contains(&"a".to_string()));
@@ -241,7 +241,7 @@ mod tests {
         let packages: HashMap<String, &PackageConfig> =
             HashMap::from([("a".into(), &a), ("b".into(), &b), ("c".into(), &c)]);
 
-        let result = resolve_order(&packages, &["a".into()], &Platform::MacOs).unwrap();
+        let result = resolve_order(&packages, &["a".into()], &Platform::new("macos")).unwrap();
         assert_eq!(result, vec!["c", "b", "a"]);
     }
 }

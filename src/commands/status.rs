@@ -10,7 +10,7 @@ use std::path::Path;
 pub fn run(args: &StatusArgs, config_path: Option<&Path>) -> Result<()> {
     let (cfg, config_file_path) = config::load(config_path)?;
     let config_dir = config_file_path.parent().unwrap();
-    let current_platform = platform::detect(args.os)?;
+    let current_platform = platform::detect(args.os.as_ref())?;
 
     for (name, pkg) in &cfg.packages {
         if !platform::matches(pkg.os.as_deref().unwrap_or(&[]), &current_platform) {

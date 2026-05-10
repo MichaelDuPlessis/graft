@@ -7,7 +7,7 @@ use std::path::Path;
 
 pub fn run(args: &ListArgs, config_path: Option<&Path>) -> Result<()> {
     let (config, _) = config::load(config_path)?;
-    let current = platform::detect(args.os)?;
+    let current = platform::detect(args.os.as_ref())?;
 
     let mut packages: Vec<_> = config.packages.iter().collect();
     packages.sort_by_key(|(name, _)| *name);
