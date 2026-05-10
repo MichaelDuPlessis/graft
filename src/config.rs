@@ -73,14 +73,16 @@ fn find_config() -> Result<PathBuf> {
     Err(GraftError::ConfigNotFound)
 }
 
+#[derive(Debug, Deserialize)]
+struct RawConfig {
+    managers: Option<HashMap<Platform, String>>,
+    packages: Option<HashMap<String, PackageConfig>>,
+}
+
 fn parse_config(content: &str, path: &Path) -> Result<GraftConfig> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    let mut raw: serde_json::Value = match ext {
-        "toml" => {
-            let table: toml::Table =
-                toml::from_str(content).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
-            serde_json::to_value(table).map_err(|e| GraftError::ConfigParse(e.to_string()))?
-        }
+    let raw: RawConfig = match ext {
+        "toml" => toml::from_str(content).map_err(|e| GraftError::ConfigParse(e.to_string()))?,
         "yaml" | "yml" => {
             yaml_serde::from_str(content).map_err(|e| GraftError::ConfigParse(e.to_string()))?
         }
@@ -94,21 +96,10 @@ fn parse_config(content: &str, path: &Path) -> Result<GraftConfig> {
         }
     };
 
-    let managers = match raw.get("managers") {
-        Some(v) => {
-            serde_json::from_value(v.clone()).map_err(|e| GraftError::ConfigParse(e.to_string()))?
-        }
-        None => default_managers(),
-    };
-
-    if let Some(obj) = raw.as_object_mut() {
-        obj.remove("managers");
-    }
-
-    let packages: HashMap<String, PackageConfig> =
-        serde_json::from_value(raw).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
-
-    Ok(GraftConfig { managers, packages })
+    Ok(GraftConfig {
+        managers: raw.managers.unwrap_or_else(default_managers),
+        packages: raw.packages.unwrap_or_default(),
+    })
 }
 
 #[cfg(test)]
@@ -122,13 +113,13 @@ mod tests {
 macos = "brew install"
 arch = "yay -S --noconfirm"
 
-[neovim]
+[packages.neovim]
 os = ["macos", "linux"]
 install = "neovim"
 files = { "nvim/" = "~/.config/nvim" }
 tags = ["editor"]
 
-[ripgrep]
+[packages.ripgrep]
 os = ["macos", "arch"]
 link_mode = "copy"
 files = { "ripgrep/config" = "~/.config/ripgrep/config" }
@@ -161,7 +152,7 @@ files = { "ripgrep/config" = "~/.config/ripgrep/config" }
     #[test]
     fn parse_per_platform_install() {
         let toml_str = r#"
-[zsh]
+[packages.zsh]
 install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
 "#;
         let path = Path::new("graft.toml");
@@ -200,7 +191,7 @@ install = { macos = "zsh", ubuntu = "zsh", arch = "zsh" }
     #[test]
     fn missing_managers_uses_defaults() {
         let toml_str = r#"
-[neovim]
+[packages.neovim]
 install = "neovim"
 "#;
         let path = Path::new("graft.toml");

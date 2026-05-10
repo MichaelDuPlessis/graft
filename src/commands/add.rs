@@ -186,12 +186,14 @@ fn append_package(name: &str, pkg: &PackageConfig, config_file: &Path) -> Result
 }
 
 fn append_toml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
-    // Build a table for just this package and serialize it
-    let mut table = toml::Table::new();
-    let pkg_value = build_toml_value(pkg);
-    table.insert(name.to_string(), pkg_value);
+    // Build a table nested under "packages" key
+    let mut packages_table = toml::Table::new();
+    packages_table.insert(name.to_string(), build_toml_value(pkg));
+    let mut wrapper = toml::Table::new();
+    wrapper.insert("packages".to_string(), toml::Value::Table(packages_table));
 
-    let fragment = toml::to_string(&table).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
+    let fragment =
+        toml::to_string(&wrapper).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     let mut content = if path.exists() {
         let existing = fs::read_to_string(path)?;
@@ -280,7 +282,13 @@ fn append_yaml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
         yaml_serde::to_value(&pkg_value).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     if let yaml_serde::Value::Mapping(ref mut map) = doc {
-        map.insert(yaml_serde::Value::String(name.to_string()), pkg_yaml);
+        let packages_key = yaml_serde::Value::String("packages".to_string());
+        let packages_map = map
+            .entry(packages_key)
+            .or_insert_with(|| yaml_serde::Value::Mapping(yaml_serde::Mapping::new()));
+        if let yaml_serde::Value::Mapping(pkgs) = packages_map {
+            pkgs.insert(yaml_serde::Value::String(name.to_string()), pkg_yaml);
+        }
     }
 
     let output = yaml_serde::to_string(&doc).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
@@ -300,7 +308,12 @@ fn append_json(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
         serde_json::to_value(pkg).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     if let serde_json::Value::Object(ref mut map) = doc {
-        map.insert(name.to_string(), pkg_value);
+        let packages = map
+            .entry("packages")
+            .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+        if let serde_json::Value::Object(pkgs) = packages {
+            pkgs.insert(name.to_string(), pkg_value);
+        }
     }
 
     let output =
