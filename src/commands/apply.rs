@@ -1,8 +1,3 @@
-use std::collections::HashMap;
-use std::path::Path;
-
-use colored::Colorize;
-
 use crate::cli::ApplyArgs;
 use crate::config::{self, LinkMode, PackageConfig};
 use crate::error::{GraftError, Result};
@@ -10,6 +5,9 @@ use crate::install;
 use crate::link;
 use crate::platform;
 use crate::resolve;
+use colored::Colorize;
+use std::collections::HashMap;
+use std::path::Path;
 
 pub fn run(args: &ApplyArgs, config_path: Option<&Path>) -> Result<()> {
     let (config, cfg_path) = config::load(config_path)?;
@@ -66,10 +64,7 @@ pub fn run(args: &ApplyArgs, config_path: Option<&Path>) -> Result<()> {
     if !args.packages.is_empty() {
         for dep in &order {
             if !args.packages.contains(dep) {
-                println!(
-                    "{}",
-                    format!("Including dependency: {dep}").cyan()
-                );
+                println!("{}", format!("Including dependency: {dep}").cyan());
             }
         }
     }

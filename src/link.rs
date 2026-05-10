@@ -1,9 +1,8 @@
+use crate::config::{LinkMode, expand_tilde};
 use std::collections::HashMap;
 use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::Path;
-
-use crate::config::{expand_tilde, LinkMode};
 
 pub fn deploy_files(
     files: &HashMap<String, String>,
@@ -28,13 +27,22 @@ pub fn deploy_files(
                 LinkMode::Symlink => "symlink",
                 LinkMode::Copy => "copy",
             };
-            println!("  {} {} → {}", action, src_path.display(), dest_path.display());
+            println!(
+                "  {} {} → {}",
+                action,
+                src_path.display(),
+                dest_path.display()
+            );
             continue;
         }
 
         if let Some(parent) = dest_path.parent() {
             if let Err(e) = fs::create_dir_all(parent) {
-                errors.push(format!("Failed to create directory {}: {}", parent.display(), e));
+                errors.push(format!(
+                    "Failed to create directory {}: {}",
+                    parent.display(),
+                    e
+                ));
                 continue;
             }
         }

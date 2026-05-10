@@ -1,8 +1,6 @@
-use std::path::PathBuf;
-
-use clap::{Parser, Subcommand};
-
 use crate::platform::Platform;
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 #[command(name = "graft", version, about = "OS-aware dotfile and tool manager")]

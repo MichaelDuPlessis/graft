@@ -1,8 +1,7 @@
-use std::collections::{HashMap, HashSet, VecDeque};
-
 use crate::config::PackageConfig;
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 /// Resolves the processing order for packages via topological sort.
 /// Returns an ordered list where dependencies come before dependents.

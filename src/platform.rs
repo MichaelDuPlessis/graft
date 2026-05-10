@@ -1,10 +1,8 @@
-use std::fmt;
-use std::process::Command;
-
+use crate::error::{GraftError, Result};
 use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
-
-use crate::error::{GraftError, Result};
+use std::fmt;
+use std::process::Command;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
@@ -65,8 +63,7 @@ pub fn matches(package_os: &[Platform], current: &Platform) -> bool {
     if package_os.contains(current) {
         return true;
     }
-    if package_os.contains(&Platform::Linux)
-        && matches!(current, Platform::Arch | Platform::Ubuntu)
+    if package_os.contains(&Platform::Linux) && matches!(current, Platform::Arch | Platform::Ubuntu)
     {
         return true;
     }

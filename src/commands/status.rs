@@ -1,13 +1,11 @@
-use std::fs;
-use std::path::Path;
-
-use colored::Colorize;
-
 use crate::cli::StatusArgs;
 use crate::config::{self, LinkMode};
 use crate::error::Result;
 use crate::install::is_installed;
 use crate::platform;
+use colored::Colorize;
+use std::fs;
+use std::path::Path;
 
 pub fn run(args: &StatusArgs, config_path: Option<&Path>) -> Result<()> {
     let (cfg, config_file_path) = config::load(config_path)?;
@@ -39,10 +37,17 @@ pub fn run(args: &StatusArgs, config_path: Option<&Path>) -> Result<()> {
         let link_mode = pkg.link_mode.unwrap_or(LinkMode::Symlink);
 
         for (src, dest_str) in files {
-            let source = config_dir.join(src).canonicalize().unwrap_or_else(|_| config_dir.join(src));
+            let source = config_dir
+                .join(src)
+                .canonicalize()
+                .unwrap_or_else(|_| config_dir.join(src));
             let dest = config::expand_tilde(dest_str);
 
-            let status = if dest.symlink_metadata().map(|m| m.file_type().is_symlink()).unwrap_or(false) {
+            let status = if dest
+                .symlink_metadata()
+                .map(|m| m.file_type().is_symlink())
+                .unwrap_or(false)
+            {
                 let target = fs::read_link(&dest).unwrap_or_default();
                 let target_canon = target.canonicalize().unwrap_or_else(|_| target.clone());
                 if target_canon == source || target == source {

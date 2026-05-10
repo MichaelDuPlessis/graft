@@ -7,13 +7,11 @@ mod link;
 mod platform;
 mod resolve;
 
-use std::process;
-
 use clap::Parser;
-use colored::Colorize;
-
 use cli::{Cli, Command};
+use colored::Colorize;
 use error::Result;
+use std::process;
 
 fn main() {
     let cli = Cli::parse();

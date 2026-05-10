@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-use std::process::Command;
-
-use dialoguer::Confirm;
-
-use crate::config::{default_managers, Install};
+use crate::config::{Install, default_managers};
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
+use dialoguer::Confirm;
+use std::collections::HashMap;
+use std::process::Command;
 
 pub fn is_installed(name: &str) -> bool {
     Command::new("which")
@@ -29,9 +27,7 @@ pub fn resolve_install_command(
     };
 
     let defaults = default_managers();
-    let prefix = managers
-        .get(platform)
-        .or_else(|| defaults.get(platform))?;
+    let prefix = managers.get(platform).or_else(|| defaults.get(platform))?;
 
     Some(format!("{} {}", prefix, package))
 }
@@ -67,10 +63,7 @@ pub fn run_install(command: &str, pkg_name: &str, yes: bool, dry_run: bool) -> R
         }
     }
 
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(command)
-        .status()?;
+    let status = Command::new("sh").arg("-c").arg(command).status()?;
 
     if !status.success() {
         return Err(GraftError::InstallFailed {

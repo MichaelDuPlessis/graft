@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-
-use serde::{Deserialize, Serialize};
-
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GraftConfig {
@@ -89,12 +87,17 @@ fn parse_config(content: &str, path: &Path) -> Result<GraftConfig> {
         "json" => {
             serde_json::from_str(content).map_err(|e| GraftError::ConfigParse(e.to_string()))?
         }
-        _ => return Err(GraftError::ConfigParse(format!("unsupported format: {ext}"))),
+        _ => {
+            return Err(GraftError::ConfigParse(format!(
+                "unsupported format: {ext}"
+            )));
+        }
     };
 
     let managers = match raw.get("managers") {
-        Some(v) => serde_json::from_value(v.clone())
-            .map_err(|e| GraftError::ConfigParse(e.to_string()))?,
+        Some(v) => {
+            serde_json::from_value(v.clone()).map_err(|e| GraftError::ConfigParse(e.to_string()))?
+        }
         None => default_managers(),
     };
 
@@ -133,12 +136,21 @@ files = { "ripgrep/config" = "~/.config/ripgrep/config" }
         let path = Path::new("graft.toml");
         let config = parse_config(toml_str, path).unwrap();
 
-        assert_eq!(config.managers.get(&Platform::MacOs).unwrap(), "brew install");
-        assert_eq!(config.managers.get(&Platform::Arch).unwrap(), "yay -S --noconfirm");
+        assert_eq!(
+            config.managers.get(&Platform::MacOs).unwrap(),
+            "brew install"
+        );
+        assert_eq!(
+            config.managers.get(&Platform::Arch).unwrap(),
+            "yay -S --noconfirm"
+        );
         assert_eq!(config.packages.len(), 2);
 
         let neovim = &config.packages["neovim"];
-        assert_eq!(neovim.os.as_ref().unwrap(), &[Platform::MacOs, Platform::Linux]);
+        assert_eq!(
+            neovim.os.as_ref().unwrap(),
+            &[Platform::MacOs, Platform::Linux]
+        );
         assert!(matches!(neovim.install, Some(Install::Simple(ref s)) if s == "neovim"));
         assert_eq!(neovim.tags.as_ref().unwrap(), &["editor"]);
 

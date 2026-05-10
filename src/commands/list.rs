@@ -1,11 +1,9 @@
-use std::path::Path;
-
-use colored::Colorize;
-
 use crate::cli::ListArgs;
 use crate::config::{self, LinkMode};
 use crate::error::Result;
 use crate::platform;
+use colored::Colorize;
+use std::path::Path;
 
 pub fn run(args: &ListArgs, config_path: Option<&Path>) -> Result<()> {
     let (config, _) = config::load(config_path)?;

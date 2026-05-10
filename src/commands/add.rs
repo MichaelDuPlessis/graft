@@ -1,13 +1,11 @@
-use std::collections::HashMap;
-use std::fs;
-use std::path::{Path, PathBuf};
-
-use dialoguer::{Input, MultiSelect, Select};
-
 use crate::cli::AddArgs;
 use crate::config::{LinkMode, PackageConfig};
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
+use dialoguer::{Input, MultiSelect, Select};
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 pub fn run(args: &AddArgs, config_path: Option<&Path>) -> Result<()> {
     let pkg = if is_interactive(args) {
@@ -33,7 +31,12 @@ fn is_interactive(args: &AddArgs) -> bool {
 }
 
 fn prompt_interactive(name: &str) -> Result<PackageConfig> {
-    let platforms = &[Platform::MacOs, Platform::Arch, Platform::Ubuntu, Platform::Linux];
+    let platforms = &[
+        Platform::MacOs,
+        Platform::Arch,
+        Platform::Ubuntu,
+        Platform::Linux,
+    ];
     let platform_labels: Vec<String> = platforms.iter().map(|p| p.to_string()).collect();
 
     let os_indices = MultiSelect::new()
@@ -48,7 +51,11 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         .allow_empty(true)
         .interact_text()
         .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-    let install = if install_input.is_empty() { None } else { Some(install_input) };
+    let install = if install_input.is_empty() {
+        None
+    } else {
+        Some(install_input)
+    };
 
     let mut files = HashMap::new();
     loop {
@@ -71,21 +78,33 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         .default(0)
         .interact()
         .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-    let link_mode = if link_mode_idx == 0 { LinkMode::Symlink } else { LinkMode::Copy };
+    let link_mode = if link_mode_idx == 0 {
+        LinkMode::Symlink
+    } else {
+        LinkMode::Copy
+    };
 
     let tags_input: String = Input::new()
         .with_prompt("Tags (comma-separated, empty to skip)")
         .allow_empty(true)
         .interact_text()
         .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-    let tags: Vec<String> = tags_input.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+    let tags: Vec<String> = tags_input
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
 
     let deps_input: String = Input::new()
         .with_prompt("Dependencies (comma-separated, empty to skip)")
         .allow_empty(true)
         .interact_text()
         .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-    let depends_on: Vec<String> = deps_input.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+    let depends_on: Vec<String> = deps_input
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
 
     Ok(PackageConfig {
         os: if os.is_empty() { None } else { Some(os) },
@@ -94,7 +113,11 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         files: if files.is_empty() { None } else { Some(files) },
         link_mode: Some(link_mode),
         tags: if tags.is_empty() { None } else { Some(tags) },
-        depends_on: if depends_on.is_empty() { None } else { Some(depends_on) },
+        depends_on: if depends_on.is_empty() {
+            None
+        } else {
+            Some(depends_on)
+        },
     })
 }
 
@@ -102,7 +125,10 @@ fn build_from_args(args: &AddArgs) -> PackageConfig {
     let files: HashMap<String, String> = args
         .files
         .iter()
-        .filter_map(|f| f.split_once(':').map(|(s, d)| (s.to_string(), d.to_string())))
+        .filter_map(|f| {
+            f.split_once(':')
+                .map(|(s, d)| (s.to_string(), d.to_string()))
+        })
         .collect();
 
     let link_mode = args.link_mode.as_deref().map(|m| match m {
@@ -111,13 +137,25 @@ fn build_from_args(args: &AddArgs) -> PackageConfig {
     });
 
     PackageConfig {
-        os: if args.os.is_empty() { None } else { Some(args.os.clone()) },
+        os: if args.os.is_empty() {
+            None
+        } else {
+            Some(args.os.clone())
+        },
         install: args.install.clone().map(crate::config::Install::Simple),
         install_command: None,
         files: if files.is_empty() { None } else { Some(files) },
         link_mode,
-        tags: if args.tag.is_empty() { None } else { Some(args.tag.clone()) },
-        depends_on: if args.depends_on.is_empty() { None } else { Some(args.depends_on.clone()) },
+        tags: if args.tag.is_empty() {
+            None
+        } else {
+            Some(args.tag.clone())
+        },
+        depends_on: if args.depends_on.is_empty() {
+            None
+        } else {
+            Some(args.depends_on.clone())
+        },
     }
 }
 
@@ -137,7 +175,10 @@ fn resolve_config_path(config_path: Option<&Path>) -> Result<PathBuf> {
 }
 
 fn append_package(name: &str, pkg: &PackageConfig, config_file: &Path) -> Result<()> {
-    let ext = config_file.extension().and_then(|e| e.to_str()).unwrap_or("toml");
+    let ext = config_file
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("toml");
 
     match ext {
         "toml" => append_toml(name, pkg, config_file),
@@ -153,12 +194,15 @@ fn append_toml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
     let pkg_value = build_toml_value(pkg);
     table.insert(name.to_string(), pkg_value);
 
-    let fragment = toml::to_string(&table)
-        .map_err(|e| GraftError::ConfigParse(e.to_string()))?;
+    let fragment = toml::to_string(&table).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     let mut content = if path.exists() {
         let existing = fs::read_to_string(path)?;
-        if existing.ends_with('\n') { existing } else { existing + "\n" }
+        if existing.ends_with('\n') {
+            existing
+        } else {
+            existing + "\n"
+        }
     } else {
         String::new()
     };
@@ -173,7 +217,10 @@ fn build_toml_value(pkg: &PackageConfig) -> toml::Value {
     let mut map = toml::Table::new();
 
     if let Some(ref os) = pkg.os {
-        let arr: Vec<toml::Value> = os.iter().map(|p| toml::Value::String(p.to_string())).collect();
+        let arr: Vec<toml::Value> = os
+            .iter()
+            .map(|p| toml::Value::String(p.to_string()))
+            .collect();
         map.insert("os".into(), toml::Value::Array(arr));
     }
     if let Some(ref install) = pkg.install {
@@ -205,11 +252,17 @@ fn build_toml_value(pkg: &PackageConfig) -> toml::Value {
         map.insert("link_mode".into(), toml::Value::String(s.into()));
     }
     if let Some(ref tags) = pkg.tags {
-        let arr: Vec<toml::Value> = tags.iter().map(|t| toml::Value::String(t.clone())).collect();
+        let arr: Vec<toml::Value> = tags
+            .iter()
+            .map(|t| toml::Value::String(t.clone()))
+            .collect();
         map.insert("tags".into(), toml::Value::Array(arr));
     }
     if let Some(ref deps) = pkg.depends_on {
-        let arr: Vec<toml::Value> = deps.iter().map(|d| toml::Value::String(d.clone())).collect();
+        let arr: Vec<toml::Value> = deps
+            .iter()
+            .map(|d| toml::Value::String(d.clone()))
+            .collect();
         map.insert("depends_on".into(), toml::Value::Array(arr));
     }
 
@@ -224,8 +277,10 @@ fn append_yaml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
         yaml_serde::Value::Mapping(yaml_serde::Mapping::new())
     };
 
-    let pkg_value = serde_json::to_value(pkg).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
-    let pkg_yaml: yaml_serde::Value = yaml_serde::to_value(&pkg_value).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
+    let pkg_value =
+        serde_json::to_value(pkg).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
+    let pkg_yaml: yaml_serde::Value =
+        yaml_serde::to_value(&pkg_value).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     if let yaml_serde::Value::Mapping(ref mut map) = doc {
         map.insert(yaml_serde::Value::String(name.to_string()), pkg_yaml);
@@ -244,13 +299,15 @@ fn append_json(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
         serde_json::Value::Object(serde_json::Map::new())
     };
 
-    let pkg_value = serde_json::to_value(pkg).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
+    let pkg_value =
+        serde_json::to_value(pkg).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     if let serde_json::Value::Object(ref mut map) = doc {
         map.insert(name.to_string(), pkg_value);
     }
 
-    let output = serde_json::to_string_pretty(&doc).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
+    let output =
+        serde_json::to_string_pretty(&doc).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
     fs::write(path, output)?;
     Ok(())
 }

@@ -1,12 +1,10 @@
-use std::fs;
-use std::path::Path;
-
-use colored::Colorize;
-
 use crate::cli::RemoveArgs;
 use crate::config::{self, LinkMode};
 use crate::error::Result;
 use crate::platform;
+use colored::Colorize;
+use std::fs;
+use std::path::Path;
 
 pub fn run(args: &RemoveArgs, config_path: Option<&Path>) -> Result<()> {
     let (cfg, config_file_path) = config::load(config_path)?;
@@ -51,24 +49,40 @@ pub fn run(args: &RemoveArgs, config_path: Option<&Path>) -> Result<()> {
         let link_mode = pkg.link_mode.unwrap_or(LinkMode::Symlink);
 
         for (src, dest_str) in files {
-            let source = config_dir.join(src).canonicalize().unwrap_or_else(|_| config_dir.join(src));
+            let source = config_dir
+                .join(src)
+                .canonicalize()
+                .unwrap_or_else(|_| config_dir.join(src));
             let dest = config::expand_tilde(dest_str);
 
             if !dest.exists() && !dest.symlink_metadata().is_ok() {
                 continue;
             }
 
-            if dest.symlink_metadata().map(|m| m.file_type().is_symlink()).unwrap_or(false) {
+            if dest
+                .symlink_metadata()
+                .map(|m| m.file_type().is_symlink())
+                .unwrap_or(false)
+            {
                 let target = fs::read_link(&dest).unwrap_or_default();
                 let target_canon = target.canonicalize().unwrap_or_else(|_| target.clone());
                 if target_canon == source || target == source {
                     if args.dry_run {
-                        println!("{} would remove symlink: {}", "[dry-run]".cyan(), dest.display());
+                        println!(
+                            "{} would remove symlink: {}",
+                            "[dry-run]".cyan(),
+                            dest.display()
+                        );
                         removed += 1;
                     } else {
                         match fs::remove_file(&dest) {
                             Ok(()) => {
-                                println!("{} {} ({})", "Removed".red(), dest.display(), name.bold());
+                                println!(
+                                    "{} {} ({})",
+                                    "Removed".red(),
+                                    dest.display(),
+                                    name.bold()
+                                );
                                 removed += 1;
                             }
                             Err(e) => {
