@@ -139,6 +139,10 @@ pub struct ScanArgs {
     #[arg(short = 'a', long)]
     pub all: bool,
 
+    /// Prompt for tags, OS, and link mode per item
+    #[arg(short = 'd', long)]
+    pub detailed: bool,
+
     /// Tag all imported packages with this tag (repeatable)
     #[arg(long)]
     pub tag: Vec<String>,

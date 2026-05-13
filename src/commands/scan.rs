@@ -3,7 +3,7 @@ use crate::config::{LinkMode, PackageConfig};
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
 use colored::Colorize;
-use dialoguer::{Confirm, Input};
+use dialoguer::{Confirm, Input, MultiSelect, Select};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -94,13 +94,15 @@ pub fn run(args: &ScanArgs) -> Result<()> {
         }
 
         // Build config entry
-        let link_mode = match args.link_mode.as_deref() {
-            Some("copy") => LinkMode::Copy,
-            _ => LinkMode::Symlink,
+        let (link_mode, os, tags) = if args.detailed {
+            prompt_package_details(&args.os, &args.tag, args.link_mode.as_deref())?
+        } else {
+            let lm = match args.link_mode.as_deref() {
+                Some("copy") => LinkMode::Copy,
+                _ => LinkMode::Symlink,
+            };
+            (lm, args.os.clone(), args.tag.clone())
         };
-
-        let os: Vec<Platform> = args.os.clone();
-        let tags: Vec<String> = args.tag.clone();
 
         let pkg = PackageConfig {
             os: if os.is_empty() { None } else { Some(os) },
@@ -173,6 +175,60 @@ fn prompt_package_name(conflicting: &str) -> Result<String> {
         .interact_text()
         .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
     Ok(name)
+}
+
+fn prompt_package_details(
+    default_os: &[Platform],
+    default_tags: &[String],
+    default_link_mode: Option<&str>,
+) -> Result<(LinkMode, Vec<Platform>, Vec<String>)> {
+    let platform_labels = &["macos", "arch", "ubuntu", "linux"];
+    let os_indices = MultiSelect::new()
+        .with_prompt("OS platforms (space to select, enter to confirm)")
+        .items(platform_labels)
+        .defaults(
+            &platform_labels
+                .iter()
+                .map(|l| default_os.iter().any(|p| p.0 == *l))
+                .collect::<Vec<_>>(),
+        )
+        .interact()
+        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+    let os: Vec<Platform> = os_indices
+        .into_iter()
+        .map(|i| Platform::new(platform_labels[i]))
+        .collect();
+
+    let default_tags_str = default_tags.join(", ");
+    let tags_input: String = Input::new()
+        .with_prompt("Tags (comma-separated, empty to skip)")
+        .default(default_tags_str)
+        .allow_empty(true)
+        .interact_text()
+        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+    let tags: Vec<String> = tags_input
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    let default_idx = match default_link_mode {
+        Some("copy") => 1,
+        _ => 0,
+    };
+    let link_mode_idx = Select::new()
+        .with_prompt("Link mode")
+        .items(&["symlink", "copy"])
+        .default(default_idx)
+        .interact()
+        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+    let link_mode = if link_mode_idx == 0 {
+        LinkMode::Symlink
+    } else {
+        LinkMode::Copy
+    };
+
+    Ok((link_mode, os, tags))
 }
 
 fn repo_path_exists(name: &str) -> bool {
