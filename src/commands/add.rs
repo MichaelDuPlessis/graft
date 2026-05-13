@@ -38,7 +38,7 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         .with_prompt(format!("OS platforms for '{name}'"))
         .items(platform_labels)
         .interact()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let os: Vec<Platform> = os_indices
         .into_iter()
         .map(|i| Platform::new(platform_labels[i]))
@@ -48,7 +48,7 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         .with_prompt("Install package name (empty to skip)")
         .allow_empty(true)
         .interact_text()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let install = if install_input.is_empty() {
         None
     } else {
@@ -61,7 +61,7 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
             .with_prompt("File mapping (source:dest, empty to stop)")
             .allow_empty(true)
             .interact_text()
-            .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+            .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
         if mapping.is_empty() {
             break;
         }
@@ -72,10 +72,10 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
 
     let link_mode_idx = Select::new()
         .with_prompt("Link mode")
-        .items(&["symlink", "copy"])
+        .items(["symlink", "copy"])
         .default(0)
         .interact()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let link_mode = if link_mode_idx == 0 {
         LinkMode::Symlink
     } else {
@@ -86,7 +86,7 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         .with_prompt("Tags (comma-separated, empty to skip)")
         .allow_empty(true)
         .interact_text()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let tags: Vec<String> = tags_input
         .split(',')
         .map(|s| s.trim().to_string())
@@ -97,7 +97,7 @@ fn prompt_interactive(name: &str) -> Result<PackageConfig> {
         .with_prompt("Dependencies (comma-separated, empty to skip)")
         .allow_empty(true)
         .interact_text()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let depends_on: Vec<String> = deps_input
         .split(',')
         .map(|s| s.trim().to_string())
@@ -211,7 +211,7 @@ fn append_toml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
         String::new()
     };
 
-    content.push_str("\n");
+    content.push('\n');
     content.push_str(&fragment);
     fs::write(path, content)?;
     Ok(())

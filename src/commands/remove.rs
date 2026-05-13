@@ -55,7 +55,7 @@ pub fn run(args: &RemoveArgs, config_path: Option<&Path>) -> Result<()> {
                 .unwrap_or_else(|_| config_dir.join(src));
             let dest = config::expand_tilde(dest_str);
 
-            if !dest.exists() && !dest.symlink_metadata().is_ok() {
+            if !dest.exists() && dest.symlink_metadata().is_err() {
                 continue;
             }
 

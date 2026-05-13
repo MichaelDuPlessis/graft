@@ -30,7 +30,7 @@ pub fn detect(override_platform: Option<&Platform>) -> Result<Platform> {
 
     #[cfg(target_os = "macos")]
     {
-        return Ok(Platform::new("macos"));
+        Ok(Platform::new("macos"))
     }
 
     #[cfg(target_os = "linux")]

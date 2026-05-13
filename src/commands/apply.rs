@@ -78,18 +78,16 @@ pub fn run(args: &ApplyArgs, config_path: Option<&Path>) -> Result<()> {
         let mut failed = false;
 
         // Install step
-        if let Some(cmd) = install::resolve_command(pkg, &current, &config.managers) {
-            if !install::is_installed(name) {
-                if let Err(e) = install::run_install(&cmd, name, args.yes, args.dry_run) {
+        if let Some(cmd) = install::resolve_command(pkg, &current, &config.managers)
+            && !install::is_installed(name)
+                && let Err(e) = install::run_install(&cmd, name, args.yes, args.dry_run) {
                     failures.push((name.clone(), e.to_string()));
                     failed = true;
                 }
-            }
-        }
 
         // Link step
-        if !failed {
-            if let Some(ref files) = pkg.files {
+        if !failed
+            && let Some(ref files) = pkg.files {
                 let mode = pkg.link_mode.unwrap_or(LinkMode::Symlink);
                 let errs = link::deploy_files(files, config_dir, mode, args.force, args.dry_run);
                 if !errs.is_empty() {
@@ -97,7 +95,6 @@ pub fn run(args: &ApplyArgs, config_path: Option<&Path>) -> Result<()> {
                     failed = true;
                 }
             }
-        }
 
         if !failed {
             succeeded += 1;

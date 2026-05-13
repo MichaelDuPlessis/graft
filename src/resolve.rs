@@ -106,8 +106,8 @@ fn find_cycle(needed: &HashSet<String>, packages: &HashMap<String, &PackageConfi
     let mut path: Vec<&str> = Vec::new();
 
     for name in needed {
-        if !visited.contains(name.as_str()) {
-            if let Some(cycle) = dfs_cycle(
+        if !visited.contains(name.as_str())
+            && let Some(cycle) = dfs_cycle(
                 name,
                 packages,
                 needed,
@@ -117,7 +117,6 @@ fn find_cycle(needed: &HashSet<String>, packages: &HashMap<String, &PackageConfi
             ) {
                 return cycle;
             }
-        }
     }
     // Fallback (shouldn't reach here if called when cycle exists)
     needed.iter().cloned().collect()
@@ -135,8 +134,8 @@ fn dfs_cycle<'a>(
     on_stack.insert(node);
     path.push(node);
 
-    if let Some(pkg) = packages.get(node) {
-        if let Some(deps) = &pkg.depends_on {
+    if let Some(pkg) = packages.get(node)
+        && let Some(deps) = &pkg.depends_on {
             for dep in deps {
                 if !needed.contains(dep) {
                     continue;
@@ -149,14 +148,12 @@ fn dfs_cycle<'a>(
                     cycle.push(dep.clone());
                     return Some(cycle);
                 }
-                if !visited.contains(dep.as_str()) {
-                    if let Some(cycle) = dfs_cycle(dep, packages, needed, visited, on_stack, path) {
+                if !visited.contains(dep.as_str())
+                    && let Some(cycle) = dfs_cycle(dep, packages, needed, visited, on_stack, path) {
                         return Some(cycle);
                     }
-                }
             }
         }
-    }
 
     path.pop();
     on_stack.remove(node);

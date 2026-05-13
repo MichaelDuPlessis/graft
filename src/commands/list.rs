@@ -28,8 +28,8 @@ pub fn run(args: &ListArgs, config_path: Option<&Path>) -> Result<()> {
         .max(7);
 
     println!(
-        "{:<name_w$}  {:>10}  {:<20}  {}",
-        "Package", "Applicable", "Tags", "Link Mode"
+        "{:<name_w$}  {:>10}  {:<20}  Link Mode",
+        "Package", "Applicable", "Tags"
     );
     println!("{}", "-".repeat(name_w + 2 + 10 + 2 + 20 + 2 + 9));
 

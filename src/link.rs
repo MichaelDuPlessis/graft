@@ -36,8 +36,8 @@ pub fn deploy_files(
             continue;
         }
 
-        if let Some(parent) = dest_path.parent() {
-            if let Err(e) = fs::create_dir_all(parent) {
+        if let Some(parent) = dest_path.parent()
+            && let Err(e) = fs::create_dir_all(parent) {
                 errors.push(format!(
                     "Failed to create directory {}: {}",
                     parent.display(),
@@ -45,7 +45,6 @@ pub fn deploy_files(
                 ));
                 continue;
             }
-        }
 
         let src_canonical = match fs::canonicalize(&src_path) {
             Ok(p) => p,

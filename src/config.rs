@@ -51,11 +51,10 @@ pub fn default_managers() -> HashMap<Platform, String> {
 }
 
 pub fn expand_tilde(path: &str) -> PathBuf {
-    if let Some(rest) = path.strip_prefix('~') {
-        if let Some(home) = dirs::home_dir() {
+    if let Some(rest) = path.strip_prefix('~')
+        && let Some(home) = dirs::home_dir() {
             return home.join(rest.strip_prefix('/').unwrap_or(rest));
         }
-    }
     PathBuf::from(path)
 }
 

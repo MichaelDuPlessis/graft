@@ -52,7 +52,7 @@ pub fn run(args: &ScanArgs) -> Result<()> {
         .with_formatter(formatter)
         .with_help_message("Press space to toggle, enter to confirm")
         .prompt()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
 
         selected
             .iter()
@@ -170,11 +170,10 @@ fn infer_package_name(filename: &str) -> String {
         name = name[1..].to_string();
     }
     // Strip file extension for single files
-    if let Some(stem) = Path::new(&name).file_stem() {
-        if Path::new(&name).extension().is_some() {
+    if let Some(stem) = Path::new(&name).file_stem()
+        && Path::new(&name).extension().is_some() {
             name = stem.to_string_lossy().to_string();
         }
-    }
     name
 }
 
@@ -182,7 +181,7 @@ fn prompt_package_name(conflicting: &str) -> Result<String> {
     let name: String = Input::new()
         .with_prompt(format!("Name '{}' conflicts. Enter a different name", conflicting))
         .interact_text()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     Ok(name)
 }
 
@@ -202,7 +201,7 @@ fn prompt_package_details(
                 .collect::<Vec<_>>(),
         )
         .interact()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let os: Vec<Platform> = os_indices
         .into_iter()
         .map(|i| Platform::new(platform_labels[i]))
@@ -214,7 +213,7 @@ fn prompt_package_details(
         .default(default_tags_str)
         .allow_empty(true)
         .interact_text()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let tags: Vec<String> = tags_input
         .split(',')
         .map(|s| s.trim().to_string())
@@ -227,10 +226,10 @@ fn prompt_package_details(
     };
     let link_mode_idx = Select::new()
         .with_prompt("Link mode")
-        .items(&["symlink", "copy"])
+        .items(["symlink", "copy"])
         .default(default_idx)
         .interact()
-        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| GraftError::IoError(std::io::Error::other(e)))?;
     let link_mode = if link_mode_idx == 0 {
         LinkMode::Symlink
     } else {
@@ -291,11 +290,10 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
 }
 
 fn path_to_tilde_string(path: &Path) -> String {
-    if let Some(home) = dirs::home_dir() {
-        if let Ok(relative) = path.strip_prefix(&home) {
+    if let Some(home) = dirs::home_dir()
+        && let Ok(relative) = path.strip_prefix(&home) {
             return format!("~/{}", relative.display());
         }
-    }
     path.display().to_string()
 }
 

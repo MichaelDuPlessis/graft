@@ -25,7 +25,7 @@ pub fn run(config_path: Option<&Path>) -> Result<()> {
     // Check source files exist
     for (name, pkg) in &cfg.packages {
         if let Some(ref files) = pkg.files {
-            for (src, _) in files {
+            for src in files.keys() {
                 let source = config_dir.join(src);
                 if !source.exists() {
                     warnings.push(format!("{}: source not found: {}", name, src));
