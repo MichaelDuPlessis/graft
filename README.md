@@ -17,11 +17,22 @@ Run `graft apply` on a fresh machine and get a fully configured environment.
 
 ## Installation
 
-TODO
+```bash
+# From source
+git clone https://github.com/user/graft.git
+cd graft
+cargo install --path .
+```
 
 ## Quick Start
 
-Create a `graft.toml` in your dotfiles directory:
+```bash
+mkdir ~/dotfiles && cd ~/dotfiles
+git init
+graft init
+```
+
+Edit the generated `graft.toml`:
 
 ```toml
 [managers]
@@ -65,6 +76,34 @@ These options work with any command:
 graft --config ~/dotfiles/graft.toml apply
 graft --config /path/to/graft.yaml status
 ```
+
+---
+
+### `graft init`
+
+Generate a starter config file in the current directory.
+
+```
+graft init [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--format <FORMAT>` | Config format to generate: `toml`, `yaml`, or `json`. Defaults to `toml`. |
+
+**Examples:**
+
+```bash
+graft init                # Creates graft.toml with commented-out examples
+graft init --format yaml  # Creates graft.yaml instead
+```
+
+**Behavior:**
+
+- Creates a starter config with commented-out examples showing the structure
+- Errors if any config file already exists (`graft.toml`, `graft.yaml`, or `graft.json`) — prevents accidental dual configs
 
 ---
 
@@ -205,6 +244,82 @@ graft add my-package
 - If some options are provided: uses them directly without prompting
 - Appends to the existing config file (or creates `graft.toml` if none exists)
 - Preserves existing config file formatting (for TOML, appends a new section)
+
+---
+
+### `graft scan`
+
+Scan a directory for config files/directories and import them into your graft repo.
+
+```
+graft scan <PATH> [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `<PATH>` | Directory to scan (e.g., `~/.config`). |
+
+**Options:**
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--all` | `-a` | Import all discovered items without prompting. |
+| `--detailed` | `-d` | Prompt for tags, OS, and link mode per item. |
+| `--tag <TAG>` | | Tag all imported packages with this tag. Repeatable. |
+| `--os <PLATFORM>` | | Set the OS field on all imported packages. Repeatable. |
+| `--link-mode <MODE>` | | Link mode for imported packages: `"symlink"` or `"copy"`. Defaults to symlink. |
+
+**Examples:**
+
+```bash
+graft scan ~/.config                          # Interactive multi-select
+graft scan ~/.config --all --tag desktop      # Import everything, tag them
+graft scan ~/.config --detailed --os macos    # Per-item prompts for tags/OS/mode
+graft scan ~/dotfiles-old --all --link-mode copy
+```
+
+**Behavior:**
+
+1. Lists immediate children of the target directory (one level deep)
+2. Presents an interactive multi-select (arrow keys to navigate, space to toggle, type to filter)
+3. For each selected item:
+   - Infers a package name from the filename (strips leading dots and extensions)
+   - Prompts for a name if there's a conflict with an existing package
+   - Copies the file/directory into the graft repo
+   - Appends a config entry to `graft.toml`
+4. With `--detailed`: also prompts for OS, tags, and link mode per item
+
+---
+
+### `graft convert`
+
+Convert the config file to a different format.
+
+```
+graft convert <FORMAT>
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `<FORMAT>` | Target format: `toml`, `yaml`, or `json`. |
+
+**Examples:**
+
+```bash
+graft convert yaml    # graft.toml → graft.yaml
+graft convert json    # graft.yaml → graft.json
+graft convert toml    # graft.json → graft.toml
+```
+
+**Behavior:**
+
+- Loads the existing config, serializes it to the target format, writes the new file, and removes the old one.
+- Errors if the target file already exists.
+- No-op if the config is already in the requested format.
 
 ---
 
