@@ -23,6 +23,8 @@ pub enum Command {
     Remove(RemoveArgs),
     /// Add a new package entry to the config file
     Add(AddArgs),
+    /// Scan a directory for configs and import them into the graft repo
+    Scan(ScanArgs),
     /// Show deployment state of packages
     Status(StatusArgs),
     /// List available packages with OS/tag info
@@ -126,4 +128,26 @@ pub struct ListArgs {
     /// Override OS detection
     #[arg(long, value_parser = platform::parse_platform)]
     pub os: Option<Platform>,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct ScanArgs {
+    /// Directory to scan for config files/directories
+    pub path: std::path::PathBuf,
+
+    /// Import all discovered items without prompting
+    #[arg(short = 'a', long)]
+    pub all: bool,
+
+    /// Tag all imported packages with this tag (repeatable)
+    #[arg(long)]
+    pub tag: Vec<String>,
+
+    /// Set the os field on all imported packages (repeatable)
+    #[arg(long, value_parser = platform::parse_platform)]
+    pub os: Vec<Platform>,
+
+    /// Link mode for imported packages: "symlink" or "copy" (default: symlink)
+    #[arg(long)]
+    pub link_mode: Option<String>,
 }

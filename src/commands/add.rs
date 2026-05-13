@@ -171,6 +171,10 @@ fn resolve_config_path(config_path: Option<&Path>) -> Result<PathBuf> {
     Ok(cwd.join("graft.toml"))
 }
 
+pub fn append_package_to_config(name: &str, pkg: &PackageConfig, config_file: &Path) -> Result<()> {
+    append_package(name, pkg, config_file)
+}
+
 fn append_package(name: &str, pkg: &PackageConfig, config_file: &Path) -> Result<()> {
     let ext = config_file
         .extension()
