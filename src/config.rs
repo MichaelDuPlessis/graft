@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GraftConfig {
     pub managers: HashMap<Platform, String>,
     pub packages: HashMap<String, PackageConfig>,
@@ -100,6 +100,20 @@ fn parse_config(content: &str, path: &Path) -> Result<GraftConfig> {
         managers: raw.managers.unwrap_or_else(default_managers),
         packages: raw.packages.unwrap_or_default(),
     })
+}
+
+pub fn serialize(config: &GraftConfig, format: &str) -> Result<String> {
+    match format {
+        "toml" => toml::to_string(config).map_err(|e| GraftError::ConfigParse(e.to_string())),
+        "yaml" | "yml" => {
+            yaml_serde::to_string(config).map_err(|e| GraftError::ConfigParse(e.to_string()))
+        }
+        "json" => serde_json::to_string_pretty(config)
+            .map_err(|e| GraftError::ConfigParse(e.to_string())),
+        _ => Err(GraftError::ConfigParse(format!(
+            "unsupported format: {format}"
+        ))),
+    }
 }
 
 #[cfg(test)]

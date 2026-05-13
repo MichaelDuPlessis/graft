@@ -19,6 +19,7 @@ fn main() {
 
     let result: Result<()> = match &cli.command {
         Command::Init(args) => commands::init::run(args),
+        Command::Convert(args) => commands::convert::run(args, config_path),
         Command::Apply(args) => commands::apply::run(args, config_path),
         Command::Remove(args) => commands::remove::run(args, config_path),
         Command::Add(args) => commands::add::run(args, config_path),

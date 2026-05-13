@@ -17,6 +17,8 @@ pub struct Cli {
 pub enum Command {
     /// Generate a starter config file in the current directory
     Init(InitArgs),
+    /// Convert config to a different format
+    Convert(ConvertArgs),
     /// Deploy packages (install tools + link files)
     Apply(ApplyArgs),
     /// Remove deployed files (unlink/delete)
@@ -36,6 +38,12 @@ pub struct InitArgs {
     /// Config format to generate: toml, yaml, json (default: toml)
     #[arg(long)]
     pub format: Option<String>,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct ConvertArgs {
+    /// Target format: toml, yaml, json
+    pub format: String,
 }
 
 #[derive(Debug, clap::Args)]
