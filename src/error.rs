@@ -9,6 +9,7 @@ pub enum GraftError {
     CycleDetected(Vec<String>),
     MissingDependency { package: String, dependency: String },
     UnknownPackage(String),
+    ConfigAlreadyExists(String),
     #[allow(dead_code)]
     SourceNotFound(String),
     InstallFailed { package: String, exit_code: i32 },
@@ -24,6 +25,7 @@ impl fmt::Display for GraftError {
             Self::CycleDetected(cycle) => write!(f, "Dependency cycle detected: {}", cycle.join(" → ")),
             Self::MissingDependency { package, dependency } => write!(f, "Package \"{package}\" depends on \"{dependency}\", which is not available."),
             Self::UnknownPackage(name) => write!(f, "Unknown package: \"{name}\""),
+            Self::ConfigAlreadyExists(path) => write!(f, "Config file already exists: {path}"),
             Self::SourceNotFound(path) => write!(f, "Source not found: {path}"),
             Self::InstallFailed { package, exit_code } => write!(f, "Install failed for \"{package}\" (exit code {exit_code})"),
             Self::IoError(e) => write!(f, "IO error: {e}"),

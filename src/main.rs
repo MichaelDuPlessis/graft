@@ -18,6 +18,7 @@ fn main() {
     let config_path = cli.config.as_deref();
 
     let result: Result<()> = match &cli.command {
+        Command::Init(args) => commands::init::run(args),
         Command::Apply(args) => commands::apply::run(args, config_path),
         Command::Remove(args) => commands::remove::run(args, config_path),
         Command::Add(args) => commands::add::run(args, config_path),

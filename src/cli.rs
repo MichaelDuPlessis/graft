@@ -15,6 +15,8 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Generate a starter config file in the current directory
+    Init(InitArgs),
     /// Deploy packages (install tools + link files)
     Apply(ApplyArgs),
     /// Remove deployed files (unlink/delete)
@@ -25,6 +27,13 @@ pub enum Command {
     Status(StatusArgs),
     /// List available packages with OS/tag info
     List(ListArgs),
+}
+
+#[derive(Debug, clap::Args)]
+pub struct InitArgs {
+    /// Config format to generate: toml, yaml, json (default: toml)
+    #[arg(long)]
+    pub format: Option<String>,
 }
 
 #[derive(Debug, clap::Args)]
