@@ -12,12 +12,19 @@ pub struct GraftConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PackageConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub os: Option<Vec<Platform>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub depends_on: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub install: Option<Install>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub install_command: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub files: Option<HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub link_mode: Option<LinkMode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
 }
 
