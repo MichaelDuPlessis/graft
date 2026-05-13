@@ -19,6 +19,8 @@ pub enum Command {
     Init(InitArgs),
     /// Convert config to a different format
     Convert(ConvertArgs),
+    /// Validate the config file
+    Check(CheckArgs),
     /// Deploy packages (install tools + link files)
     Apply(ApplyArgs),
     /// Remove deployed files (unlink/delete)
@@ -45,6 +47,9 @@ pub struct ConvertArgs {
     /// Target format: toml, yaml, json
     pub format: String,
 }
+
+#[derive(Debug, clap::Args)]
+pub struct CheckArgs {}
 
 #[derive(Debug, clap::Args)]
 pub struct ApplyArgs {

@@ -1,5 +1,6 @@
 pub mod add;
 pub mod apply;
+pub mod check;
 pub mod convert;
 pub mod init;
 pub mod list;
