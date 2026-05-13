@@ -2,6 +2,7 @@ use crate::cli::AddArgs;
 use crate::config::{LinkMode, PackageConfig};
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
+use colored::Colorize;
 use dialoguer::{Input, MultiSelect, Select};
 use std::collections::HashMap;
 use std::fs;
@@ -17,7 +18,7 @@ pub fn run(args: &AddArgs, config_path: Option<&Path>) -> Result<()> {
     let config_file = resolve_config_path(config_path)?;
     append_package(&args.name, &pkg, &config_file)?;
 
-    println!("Added package '{}' to {}", args.name, config_file.display());
+    println!("{} Added package '{}' to {}", "✓".green(), args.name.bold(), config_file.display());
     Ok(())
 }
 

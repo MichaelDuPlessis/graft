@@ -5,6 +5,7 @@ use std::io;
 pub enum GraftError {
     ConfigNotFound,
     ConfigParse(String),
+    #[allow(dead_code)]
     OsDetectionFailed,
     CycleDetected(Vec<String>),
     MissingDependency { package: String, dependency: String },

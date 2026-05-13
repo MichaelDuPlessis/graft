@@ -126,6 +126,7 @@ pub fn run(args: &ScanArgs) -> Result<()> {
         let config_file = resolve_config_path()?;
         crate::commands::add::append_package_to_config(&pkg_name, &pkg, &config_file)?;
 
+        println!("  {} {}", "✓".green(), pkg_name.bold());
         imported += 1;
     }
 

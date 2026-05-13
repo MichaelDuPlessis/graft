@@ -1,5 +1,6 @@
 use crate::cli::InitArgs;
 use crate::error::{GraftError, Result};
+use colored::Colorize;
 use std::path::Path;
 
 const TOML_TEMPLATE: &str = r#"# Graft configuration
@@ -62,6 +63,6 @@ pub fn run(args: &InitArgs) -> Result<()> {
     std::fs::write(filename, content)
         .map_err(|e| GraftError::ConfigParse(format!("failed to write {filename}: {e}")))?;
 
-    println!("Created {filename}");
+    println!("{} Created {}", "✓".green(), filename.bold());
     Ok(())
 }
