@@ -293,6 +293,46 @@ graft scan ~/dotfiles-old --all --link-mode copy
 
 ---
 
+### `graft check`
+
+Validate the config file without making any changes.
+
+```
+graft check
+```
+
+**Examples:**
+
+```bash
+graft check
+graft check --config ~/dotfiles/graft.toml
+```
+
+**Validates:**
+
+- Config file parses correctly (syntax)
+- No dependency cycles
+- No references to packages that don't exist in the config
+- Source files/directories referenced in `files` mappings exist in the repo
+
+**Output:**
+
+```
+✓ Config is valid (graft.toml)
+  4 package(s), 3 manager(s)
+```
+
+Or with issues:
+
+```
+Errors:
+  ✗ Dependency cycle detected: waybar → hyprland → waybar
+Warnings:
+  ⚠ neovim: source not found: nvim/
+```
+
+---
+
 ### `graft convert`
 
 Convert the config file to a different format.
