@@ -21,6 +21,7 @@ fn main() {
         Command::Init(args) => commands::init::run(args),
         Command::Convert(args) => commands::convert::run(args, config_path),
         Command::Check(_) => commands::check::run(config_path),
+        Command::Doctor => commands::doctor::run(),
         Command::Apply(args) => commands::apply::run(args, config_path),
         Command::Remove(args) => commands::remove::run(args, config_path),
         Command::Add(args) => commands::add::run(args, config_path),

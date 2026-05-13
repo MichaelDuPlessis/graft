@@ -21,6 +21,8 @@ pub enum Command {
     Convert(ConvertArgs),
     /// Validate the config file
     Check(CheckArgs),
+    /// Show detected platform info
+    Doctor,
     /// Deploy packages (install tools + link files)
     Apply(ApplyArgs),
     /// Remove deployed files (unlink/delete)
