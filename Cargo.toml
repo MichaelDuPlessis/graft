@@ -19,6 +19,7 @@ yaml_serde = "0.10"
 toml = "1"
 dirs = "6"
 dialoguer = "0.12"
+inquire = "0.7"
 colored = "3"
 
 [dev-dependencies]

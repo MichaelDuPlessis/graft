@@ -3,7 +3,7 @@ use crate::config::{LinkMode, PackageConfig};
 use crate::error::{GraftError, Result};
 use crate::platform::Platform;
 use colored::Colorize;
-use dialoguer::{Confirm, Input, MultiSelect, Select};
+use dialoguer::{Input, MultiSelect, Select};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -33,37 +33,45 @@ pub fn run(args: &ScanArgs) -> Result<()> {
         return Ok(());
     }
 
-    // Display what was found
-    println!(
-        "Found {} items in {}:",
-        items.len(),
-        scan_path.display()
-    );
-    for item in &items {
-        let kind = if item.is_dir { "[dir] " } else { "[file]" };
-        println!("  {} {}", kind.dimmed(), item.name);
+    // Select which items to import
+    let selected_indices = if args.all {
+        (0..items.len()).collect::<Vec<_>>()
+    } else {
+        let labels: Vec<&str> = items
+            .iter()
+            .map(|item| item.name.as_str())
+            .collect();
+
+        let formatter: inquire::formatter::MultiOptionFormatter<&str> =
+            &|selected| format!("{} item(s) selected", selected.len());
+
+        let selected = inquire::MultiSelect::new(
+            "Select items to import (↑↓ navigate, space select, type to filter):",
+            labels,
+        )
+        .with_formatter(formatter)
+        .with_help_message("Press space to toggle, enter to confirm")
+        .prompt()
+        .map_err(|e| GraftError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+
+        selected
+            .iter()
+            .filter_map(|s| items.iter().position(|item| item.name.as_str() == *s))
+            .collect()
+    };
+
+    if selected_indices.is_empty() {
+        println!("No packages imported.");
+        return Ok(());
     }
-    println!();
 
     // Load existing config to check for name conflicts
     let existing_packages = load_existing_package_names();
 
-    // Filter/confirm items and import
+    // Process selected items
     let mut imported = 0;
-    for item in &items {
-        let accepted = if args.all {
-            true
-        } else {
-            Confirm::new()
-                .with_prompt(format!("Import {}?", item.name))
-                .default(false)
-                .interact()
-                .unwrap_or(false)
-        };
-
-        if !accepted {
-            continue;
-        }
+    for &idx in &selected_indices {
+        let item = &items[idx];
 
         // Infer package name
         let mut pkg_name = infer_package_name(&item.name);
