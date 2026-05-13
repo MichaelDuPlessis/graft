@@ -293,6 +293,24 @@ graft scan ~/dotfiles-old --all --link-mode copy
 
 ---
 
+### `graft doctor`
+
+Show the detected platform.
+
+```
+graft doctor
+```
+
+**Output:**
+
+```
+✓ Detected platform: macos
+```
+
+Useful for verifying what graft thinks your OS is, especially on Linux where it reads `/etc/os-release`. If detection fails, it tells you why.
+
+---
+
 ### `graft check`
 
 Validate the config file without making any changes.
