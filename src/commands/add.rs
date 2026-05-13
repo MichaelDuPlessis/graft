@@ -191,48 +191,14 @@ fn append_package(name: &str, pkg: &PackageConfig, config_file: &Path) -> Result
 }
 
 fn append_toml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
-    let mut lines = Vec::new();
-    lines.push(format!("[packages.{}]", name));
+    // Build a table nested under "packages" key
+    let mut packages_table = toml::Table::new();
+    packages_table.insert(name.to_string(), build_toml_value(pkg));
+    let mut wrapper = toml::Table::new();
+    wrapper.insert("packages".to_string(), toml::Value::Table(packages_table));
 
-    if let Some(ref os) = pkg.os {
-        let vals: Vec<String> = os.iter().map(|p| format!("\"{}\"", p)).collect();
-        lines.push(format!("os = [{}]", vals.join(", ")));
-    }
-    if let Some(ref deps) = pkg.depends_on {
-        let vals: Vec<String> = deps.iter().map(|d| format!("\"{}\"", d)).collect();
-        lines.push(format!("depends_on = [{}]", vals.join(", ")));
-    }
-    if let Some(ref install) = pkg.install {
-        match install {
-            crate::config::Install::Simple(s) => {
-                lines.push(format!("install = \"{}\"", s));
-            }
-            crate::config::Install::PerPlatform(m) => {
-                let pairs: Vec<String> = m.iter().map(|(p, v)| format!("{} = \"{}\"", p, v)).collect();
-                lines.push(format!("install = {{ {} }}", pairs.join(", ")));
-            }
-        }
-    }
-    if let Some(ref install_cmd) = pkg.install_command {
-        lines.push(format!("install_command = \"{}\"", install_cmd));
-    }
-    if let Some(ref files) = pkg.files {
-        let pairs: Vec<String> = files.iter().map(|(k, v)| format!("\"{}\" = \"{}\"", k, v)).collect();
-        lines.push(format!("files = {{ {} }}", pairs.join(", ")));
-    }
-    if let Some(link_mode) = pkg.link_mode {
-        let s = match link_mode {
-            LinkMode::Symlink => "symlink",
-            LinkMode::Copy => "copy",
-        };
-        lines.push(format!("link_mode = \"{}\"", s));
-    }
-    if let Some(ref tags) = pkg.tags {
-        let vals: Vec<String> = tags.iter().map(|t| format!("\"{}\"", t)).collect();
-        lines.push(format!("tags = [{}]", vals.join(", ")));
-    }
-
-    let fragment = lines.join("\n");
+    let fragment =
+        toml::to_string(&wrapper).map_err(|e| GraftError::ConfigParse(e.to_string()))?;
 
     let mut content = if path.exists() {
         let existing = fs::read_to_string(path)?;
@@ -245,11 +211,66 @@ fn append_toml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
         String::new()
     };
 
-    content.push('\n');
+    content.push_str("\n");
     content.push_str(&fragment);
-    content.push('\n');
     fs::write(path, content)?;
     Ok(())
+}
+
+fn build_toml_value(pkg: &PackageConfig) -> toml::Value {
+    let mut map = toml::Table::new();
+
+    if let Some(ref os) = pkg.os {
+        let arr: Vec<toml::Value> = os
+            .iter()
+            .map(|p| toml::Value::String(p.to_string()))
+            .collect();
+        map.insert("os".into(), toml::Value::Array(arr));
+    }
+    if let Some(ref install) = pkg.install {
+        match install {
+            crate::config::Install::Simple(s) => {
+                map.insert("install".into(), toml::Value::String(s.clone()));
+            }
+            crate::config::Install::PerPlatform(m) => {
+                let mut t = toml::Table::new();
+                for (p, v) in m {
+                    t.insert(p.to_string(), toml::Value::String(v.clone()));
+                }
+                map.insert("install".into(), toml::Value::Table(t));
+            }
+        }
+    }
+    if let Some(ref files) = pkg.files {
+        let mut t = toml::Table::new();
+        for (k, v) in files {
+            t.insert(k.clone(), toml::Value::String(v.clone()));
+        }
+        map.insert("files".into(), toml::Value::Table(t));
+    }
+    if let Some(link_mode) = pkg.link_mode {
+        let s = match link_mode {
+            LinkMode::Symlink => "symlink",
+            LinkMode::Copy => "copy",
+        };
+        map.insert("link_mode".into(), toml::Value::String(s.into()));
+    }
+    if let Some(ref tags) = pkg.tags {
+        let arr: Vec<toml::Value> = tags
+            .iter()
+            .map(|t| toml::Value::String(t.clone()))
+            .collect();
+        map.insert("tags".into(), toml::Value::Array(arr));
+    }
+    if let Some(ref deps) = pkg.depends_on {
+        let arr: Vec<toml::Value> = deps
+            .iter()
+            .map(|d| toml::Value::String(d.clone()))
+            .collect();
+        map.insert("depends_on".into(), toml::Value::Array(arr));
+    }
+
+    toml::Value::Table(map)
 }
 
 fn append_yaml(name: &str, pkg: &PackageConfig, path: &Path) -> Result<()> {
