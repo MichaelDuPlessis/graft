@@ -17,11 +17,29 @@ Run `graft apply` on a fresh machine and get a fully configured environment.
 
 ## Installation
 
+Currently, building from source is the only installation method.
+
+### Prerequisites
+
+- [Rust toolchain](https://rustup.rs/) (install via `rustup`)
+
+### Install
+
 ```bash
-# From source
 git clone https://github.com/user/graft.git
 cd graft
 cargo install --path .
+```
+
+This installs the `graft` binary to `~/.cargo/bin/`, which is added to your `PATH` automatically by rustup.
+
+### Build without installing
+
+If you just want the binary without installing it globally:
+
+```bash
+cargo build --release
+# Binary is at target/release/graft
 ```
 
 ## Quick Start
